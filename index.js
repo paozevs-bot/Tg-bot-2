@@ -1,11 +1,12 @@
 const express = require("express");
 const axios = require("axios");
 const { Telegraf } = require("telegraf");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const path = require("path");
 app.use("/media", express.static(path.join(__dirname, "media")));
 
 // 🔐 ДАННЫЕ
@@ -25,15 +26,19 @@ const tariffs = {
 };
 
 // =======================
-// START (НЕ ТРОГАЕМ ТЕКСТ)
+// START
 // =======================
 bot.start(async (ctx) => {
   await ctx.replyWithPhoto(
     "https://i.ibb.co/tpWJV9tr/Chat-GPT-Image-22-2026-12-57-27.png",
     {
       caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦                 
-    ПОДДЕРЖКА - @ADreksler                
-    Покупая подписку вы подтверждайте что вам есть 18 лет❗️️`,
+
+
+ПОДДЕРЖКА - @ADreksler                
+
+
+Покупая подписку вы подтверждайте что вам есть 18 лет❗️`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "✨ 30 дней", callback_data: "t_30" }],
@@ -46,22 +51,28 @@ bot.start(async (ctx) => {
 });
 
 // =======================
-// WEBHOOK PLATEGA
+// WEBHOOK PLATEGA (ГЛАВНОЕ)
 // =======================
 app.post("/platega-webhook", async (req, res) => {
-  res.sendStatus(200); // ОТВЕЧАЕМ СРАЗУ
+  // ОТВЕЧАЕМ СРАЗУ ВСЕГДА
+  res.sendStatus(200);
 
   try {
     const data = req.body;
-    console.log("WEBHOOK:", data);
+    console.log("PLATEGA WEBHOOK:", data);
 
     if (!data || data.status !== "paid") return;
+    if (!data.payload) return;
 
-    const [prefix, userId, days] = data.payload.split("_");
+    const parts = data.payload.split("_");
+    const userId = parts[1];
+    const days = parts[2];
+
+    if (!userId || !days) return;
 
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла! Доступ на ${days} дней активирован`
+      `✅ Оплата прошла!\nДоступ на ${days} дней активирован`
     );
 
   } catch (e) {
@@ -70,7 +81,7 @@ app.post("/platega-webhook", async (req, res) => {
 });
 
 // =======================
-// PAY API (Platega)
+// PAY (Platega)
 // =======================
 app.post("/pay", async (req, res) => {
   try {
@@ -98,20 +109,20 @@ app.post("/pay", async (req, res) => {
     res.json({ url: response.data.url });
 
   } catch (e) {
-    console.log(e.message);
+    console.log("PAY ERROR:", e.message);
     res.status(500).json({ error: "payment_failed" });
   }
 });
 
 // =======================
-// HOME CHECK
+// HOME
 // =======================
 app.get("/", (req, res) => {
   res.send("bot is running");
 });
 
 // =======================
-// SERVER START
+// START SERVER
 // =======================
 app.listen(3000, () => console.log("server running"));
 

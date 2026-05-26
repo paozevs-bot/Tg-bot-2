@@ -6,19 +6,11 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const path = require("path");
-app.use("/media", express.static(path.join(__dirname, "media")));
+const bot = new Telegraf("8131097541:AAEHHKDmedkzxXzaJtT9_xIPGA19B0Y4wOc");
 
-// 🔐 ДАННЫЕ
+// 🔐 Platega
 const MERCHANT_ID = "5844ffa9-a371-4b88-ab20-eb5c055385d2";
 const SECRET = "UUyQW5aZLO591x0tm4u4EUbUyCYWH1ZryO6Z1r7R58sf83ZirFBp7VRKbuW8LjXHbombbpjnIAgyzr6DIWTqhonP13Liw3iW7mvB";
-
-const BOT_TOKEN = "8131097541:AAEHHKDmedkzxXzaJtT9_xIPGA19B0Y4wOc";
-const CRYPTOBOT_TOKEN = "573763:AAKaGSoSAWqHF4gSCkpOkGWgkBPlIrAUW4Z";
-
-const CHANNEL_ID = -1002358356232;
-
-const bot = new Telegraf(BOT_TOKEN);
 
 // 💰 тарифы
 const tariffs = {
@@ -27,48 +19,18 @@ const tariffs = {
   "360": { rub: 1499, usdt: 20, stars: 1499 }
 };
 
-// 🧠 активные подписки
-const activeSubs = new Map();
-
-// =======================
-// Crypto
-// =======================
-async function createCryptoLink(days, userId) {
-  const response = await axios.post(
-    "https://pay.crypt.bot/api/createInvoice",
-    {
-      asset: "USDT",
-      amount: tariffs[days].usdt,
-      description: `tariff ${days}`,
-      payload: `crypto_${days}_${userId}`
-    },
-    {
-      headers: {
-        "Crypto-Pay-API-Token": CRYPTOBOT_TOKEN
-      }
-    }
-  );
-
-  return response.data.result.pay_url;
-}
-
 // =======================
 // START
 // =======================
 bot.start(async (ctx) => {
-  await ctx.replyWithPhoto(
-    "https://i.ibb.co/tpWJV9tr/Chat-GPT-Image-22-2026-12-57-27.png",
+  await ctx.reply(
+    "Выбери тариф",
     {
-      caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦                 
-
-ПОДДЕРЖКА - @ADreksler                
-
-Покупая подписку вы подтверждайте что вам есть 18 лет❗️️`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "✨ 30 дней", callback_data: "t_30" }],
-          [{ text: "💎 90 дней", callback_data: "t_90" }],
-          [{ text: "👑 360 дней", callback_data: "t_360" }]
+          [{ text: "30 дней", callback_data: "t_30" }],
+          [{ text: "90 дней", callback_data: "t_90" }],
+          [{ text: "360 дней", callback_data: "t_360" }]
         ]
       }
     }
@@ -76,21 +38,18 @@ bot.start(async (ctx) => {
 });
 
 // =======================
-// ТАРИФЫ
+// ТАРИФ
 // =======================
 bot.action(/t_(\d+)/, async (ctx) => {
   const days = ctx.match[1];
-  const price = tariffs[days];
 
-  await ctx.editMessageCaption(
-    `✨ Тариф: ${days} дней 💰 ${price.rub}₽`,
+  await ctx.editMessageText(
+    `Тариф ${days} дней`,
     {
       reply_markup: {
         inline_keyboard: [
           [{ text: "💳 СБП", callback_data: `pay_card_${days}` }],
-          [{ text: "₿ Crypto", callback_data: `pay_crypto_${days}` }],
-          [{ text: "⭐ Stars", callback_data: `pay_stars_${days}` }],
-          [{ text: "⬅️ Назад", callback_data: "back_main" }]
+          [{ text: "⬅️ Назад", callback_data: "back" }]
         ]
       }
     }
@@ -100,40 +59,63 @@ bot.action(/t_(\d+)/, async (ctx) => {
 // =======================
 // BACK
 // =======================
-bot.action("back_main", async (ctx) => {
-  return ctx.editMessageCaption(
-    `Главное меню`,
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "✨ 30 дней", callback_data: "t_30" }],
-          [{ text: "💎 90 дней", callback_data: "t_90" }],
-          [{ text: "👑 360 дней", callback_data: "t_360" }]
-        ]
-      }
+bot.action("back", async (ctx) => {
+  return ctx.editMessageText("Выбери тариф", {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "30 дней", callback_data: "t_30" }],
+        [{ text: "90 дней", callback_data: "t_90" }],
+        [{ text: "360 дней", callback_data: "t_360" }]
+      ]
     }
-  );
+  });
 });
 
 // =======================
-// PAY CARD (СБП)
+// СБП
 // =======================
 bot.action(/pay_card_(\d+)/, async (ctx) => {
   try {
     const days = ctx.match[1];
 
-    const response = await axios.post("https://tg-bot-2-eqgt.onrender.com/pay", {
-      days,
-      userId: ctx.from.id
-    });
+    console.log("PAY START:", days);
 
+    const response = await axios.post(
+      "https://app.platega.io/transaction/process",
+      {
+        paymentMethod: 2,
+        paymentDetails: {
+          amount: tariffs[days].rub,
+          currency: "RUB"
+        },
+        description: `tariff ${days}`,
+        payload: `tg_${ctx.from.id}_${days}`
+      },
+      {
+        headers: {
+          "X-MerchantId": MERCHANT_ID,
+          "X-Secret": SECRET
+        }
+      }
+    );
+
+    console.log("PLATEGA RESPONSE:", response.data);
+
+    // 🔥 ВАЖНО: вытаскиваем URL максимально надёжно
     const url =
       response.data?.url ||
+      response.data?.data?.url ||
       response.data?.result?.url ||
+      response.data?.paymentUrl ||
       response.data?.payment_url;
 
+    if (!url) {
+      console.log("NO URL FROM PLATEGA");
+      return ctx.reply("Платёжка не вернула ссылку");
+    }
+
     await ctx.editMessageText(
-      `💳 Оплата ${days} дней`,
+      `💳 Оплата ${days} дней готова`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -143,52 +125,15 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
         }
       }
     );
+
   } catch (e) {
-    console.log("CARD ERROR:", e.message);
-    ctx.reply("Ошибка оплаты СБП");
+    console.log("PAY ERROR:", e?.response?.data || e.message);
+    ctx.reply("Ошибка СБП (см. сервер)");
   }
 });
 
 // =======================
-// CRYPTO
-// =======================
-bot.action(/pay_crypto_(\d+)/, async (ctx) => {
-  const days = ctx.match[1];
-
-  const url = await createCryptoLink(days, ctx.from.id);
-
-  await ctx.editMessageText(
-    `₿ Crypto ${days} дней`,
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "ОПЛАТИТЬ", url }],
-          [{ text: "⬅️ Назад", callback_data: `t_${days}` }]
-        ]
-      }
-    }
-  );
-});
-
-// =======================
-// STARS
-// =======================
-bot.action(/pay_stars_(\d+)/, async (ctx) => {
-  const days = ctx.match[1];
-
-  await ctx.replyWithInvoice({
-    title: `${days} дней`,
-    description: `Подписка`,
-    payload: `stars_${days}_${ctx.from.id}`,
-    currency: "XTR",
-    prices: [
-      { label: `${days}`, amount: tariffs[days].stars }
-    ]
-  });
-});
-
-// =======================
-// PAY API
+// SERVER PAY (если понадобится отдельно)
 // =======================
 app.post("/pay", async (req, res) => {
   try {
@@ -215,23 +160,20 @@ app.post("/pay", async (req, res) => {
 
     const url =
       response.data?.url ||
-      response.data?.result?.url ||
       response.data?.data?.url ||
+      response.data?.result?.url ||
       response.data?.payment_url;
 
-    return res.json({ url });
+    return res.json({ url: url || null });
+
   } catch (e) {
-    console.log("PAY ERROR:", e?.response?.data || e.message);
+    console.log("PAY API ERROR:", e?.response?.data || e.message);
     return res.status(500).json({ error: "payment_failed" });
   }
 });
 
 // =======================
-// SERVER
-// =======================
-app.get("/", (req, res) => {
-  res.send("bot is running");
-});
+app.get("/", (req, res) => res.send("bot running"));
 
 app.listen(3000, () => console.log("server running"));
 

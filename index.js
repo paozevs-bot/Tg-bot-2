@@ -52,7 +52,7 @@ async function createCryptoLink(days, userId) {
 }
 
 // =======================
-// START (НЕ ТРОГАЮ ТВОЙ ТЕКСТ)
+// START (ТВОЙ ТЕКСТ НЕ ТРОГАЮ)
 // =======================
 bot.start(async (ctx) => {
   await ctx.replyWithPhoto(
@@ -117,39 +117,27 @@ bot.action("back_main", async (ctx) => {
 });
 
 // =======================
-// СБП (КАРТА) - ФИКС
+// CARD PAY (Platega)
 // =======================
 bot.action(/pay_card_(\d+)/, async (ctx) => {
   const days = ctx.match[1];
 
-  try {
-    const response = await axios.post("http://127.0.0.1:3000/pay", {
-      days,
-      userId: ctx.from.id
-    });
+  const response = await axios.post("http://localhost:3000/pay", {
+    days,
+    userId: ctx.from.id
+  });
 
-    const url = response.data?.url;
-
-    if (!url) {
-      return ctx.reply("❌ Ошибка: нет ссылки оплаты");
-    }
-
-    await ctx.editMessageCaption(
-      `💳 Оплата ${days} дней`,
-      {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "ОПЛАТИТЬ", url }],
-            [{ text: "⬅️ Назад", callback_data: `t_${days}` }]
-          ]
-        }
+  await ctx.editMessageCaption(
+    `💳 Оплата ${days} дней`,
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "ОПЛАТИТЬ", url: response.data.url }],
+          [{ text: "⬅️ Назад", callback_data: `t_${days}` }]
+        ]
       }
-    );
-
-  } catch (e) {
-    console.log(e.response?.data || e.message);
-    ctx.reply("❌ Ошибка СБП оплаты");
-  }
+    }
+  );
 });
 
 // =======================
@@ -201,17 +189,47 @@ bot.on("successful_payment", async (ctx) => {
     const expire = Date.now() + days * 24 * 60 * 60 * 1000;
     activeSubs.set(userId, expire);
 
-    await ctx.telegram.approveChatJoinRequest(CHANNEL_ID, Number(userId));
-
-    await ctx.reply("✅ Доступ выдан автоматически");
-
+    await ctx.telegram.sendMessage(
+      userId,
+      `✅ Оплата прошла! Доступ на ${days} дней активирован`
+    );
   } catch (e) {
     console.log(e.message);
   }
 });
 
 // =======================
-// PAY API (СБП)
+// PLATEGA WEBHOOK (ВОТ ОН)
+// =======================
+app.post("/platega-webhook", async (req, res) => {
+  try {
+    const data = req.body;
+
+    console.log("WEBHOOK:", data);
+
+    const payload = data.payload;
+    const status = data.status;
+
+    if (status !== "paid") {
+      return res.sendStatus(200);
+    }
+
+    const [prefix, userId, days] = payload.split("_");
+
+    await bot.telegram.sendMessage(
+      userId,
+      `✅ Оплата прошла! Доступ на ${days} дней активирован`
+    );
+
+    res.sendStatus(200);
+  } catch (e) {
+    console.log(e);
+    res.sendStatus(500);
+  }
+});
+
+// =======================
+// PAY API (Platega)
 // =======================
 app.post("/pay", async (req, res) => {
   try {
@@ -236,20 +254,8 @@ app.post("/pay", async (req, res) => {
       }
     );
 
-    const url =
-      response.data?.url ||
-      response.data?.redirect ||
-      response.data?.result?.url;
-
-    if (!url) {
-      console.log("PLATEGA RESPONSE:", response.data);
-      return res.status(500).json({ error: "no_url" });
-    }
-
-    res.json({ url });
-
+    res.json({ url: response.data.url });
   } catch (e) {
-    console.log(e.response?.data || e.message);
     res.status(500).json({ error: "payment_failed" });
   }
 });
@@ -257,6 +263,10 @@ app.post("/pay", async (req, res) => {
 // =======================
 // SERVER
 // =======================
+app.get("/", (req, res) => {
+  res.send("bot is running");
+});
+
 app.listen(3000, () => console.log("server running"));
 
 bot.launch();

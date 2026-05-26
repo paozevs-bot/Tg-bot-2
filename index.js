@@ -61,9 +61,7 @@ bot.start(async (ctx) => {
     {
       caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦                 
 
-
 ПОДДЕРЖКА - @ADreksler                
-
 
 Покупая подписку вы подтверждайте что вам есть 18 лет❗️️`,
       reply_markup: {
@@ -118,27 +116,37 @@ bot.action("back_main", async (ctx) => {
 });
 
 // =======================
-// PAY CARD
+// PAY CARD (СБП)
 // =======================
 bot.action(/pay_card_(\d+)/, async (ctx) => {
-  const days = ctx.match[1];
+  try {
+    const days = ctx.match[1];
 
-  const response = await axios.post("https://tg-bot-2-eqgt.onrender.com/pay", {
-    days,
-    userId: ctx.from.id
-  });
+    const response = await axios.post("https://tg-bot-2-eqgt.onrender.com/pay", {
+      days,
+      userId: ctx.from.id
+    });
 
-  await ctx.editMessageCaption(
-    `💳 Оплата ${days} дней`,
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "ОПЛАТИТЬ", url: response.data.url }],
-          [{ text: "⬅️ Назад", callback_data: `t_${days}` }]
-        ]
+    const url =
+      response.data?.url ||
+      response.data?.result?.url ||
+      response.data?.payment_url;
+
+    await ctx.editMessageText(
+      `💳 Оплата ${days} дней`,
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "ОПЛАТИТЬ", url }],
+            [{ text: "⬅️ Назад", callback_data: `t_${days}` }]
+          ]
+        }
       }
-    }
-  );
+    );
+  } catch (e) {
+    console.log("CARD ERROR:", e.message);
+    ctx.reply("Ошибка оплаты СБП");
+  }
 });
 
 // =======================
@@ -149,7 +157,7 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
 
   const url = await createCryptoLink(days, ctx.from.id);
 
-  await ctx.editMessageCaption(
+  await ctx.editMessageText(
     `₿ Crypto ${days} дней`,
     {
       reply_markup: {
@@ -180,13 +188,6 @@ bot.action(/pay_stars_(\d+)/, async (ctx) => {
 });
 
 // =======================
-// WEB SERVER
-// =======================
-app.get("/", (req, res) => {
-  res.send("bot is running");
-});
-
-// =======================
 // PAY API
 // =======================
 app.post("/pay", async (req, res) => {
@@ -212,15 +213,26 @@ app.post("/pay", async (req, res) => {
       }
     );
 
-    res.json({ url: response.data.url });
+    const url =
+      response.data?.url ||
+      response.data?.result?.url ||
+      response.data?.data?.url ||
+      response.data?.payment_url;
+
+    return res.json({ url });
   } catch (e) {
-    res.status(500).json({ error: "payment_failed" });
+    console.log("PAY ERROR:", e?.response?.data || e.message);
+    return res.status(500).json({ error: "payment_failed" });
   }
 });
 
 // =======================
-// SERVER START
+// SERVER
 // =======================
+app.get("/", (req, res) => {
+  res.send("bot is running");
+});
+
 app.listen(3000, () => console.log("server running"));
 
 bot.launch();

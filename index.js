@@ -202,29 +202,24 @@ bot.on("successful_payment", async (ctx) => {
 // PLATEGA WEBHOOK (ВОТ ОН)
 // =======================
 app.post("/platega-webhook", async (req, res) => {
+  res.sendStatus(200); // СНАЧАЛА ОТВЕТ
+
   try {
     const data = req.body;
 
     console.log("WEBHOOK:", data);
 
-    const payload = data.payload;
-    const status = data.status;
+    if (!data || data.status !== "paid") return;
 
-    if (status !== "paid") {
-      return res.sendStatus(200);
-    }
-
-    const [prefix, userId, days] = payload.split("_");
+    const [prefix, userId, days] = data.payload.split("_");
 
     await bot.telegram.sendMessage(
       userId,
       `✅ Оплата прошла! Доступ на ${days} дней активирован`
     );
 
-    res.sendStatus(200);
   } catch (e) {
-    console.log(e);
-    res.sendStatus(500);
+    console.log("WEBHOOK ERROR:", e.message);
   }
 });
 

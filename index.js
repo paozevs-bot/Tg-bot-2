@@ -53,19 +53,19 @@ async function createCryptoLink(days, userId) {
 }
 
 // =======================
-// START (ТВОЙ ТЕКСТ НЕ ТРОГАЮ)
+// START
 // =======================
 bot.start(async (ctx) => {
   await ctx.replyWithPhoto(
     "https://i.ibb.co/tpWJV9tr/Chat-GPT-Image-22-2026-12-57-27.png",
     {
       caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦                 
-    
-    
-    ПОДДЕРЖКА - @ADreksler                
-    
-    
-    Покупая подписку вы подтверждайте что вам есть 18 лет❗️️`,
+
+
+ПОДДЕРЖКА - @ADreksler                
+
+
+Покупая подписку вы подтверждайте что вам есть 18 лет❗️️`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "✨ 30 дней", callback_data: "t_30" }],
@@ -118,12 +118,12 @@ bot.action("back_main", async (ctx) => {
 });
 
 // =======================
-// CARD PAY (Platega)
+// PAY CARD
 // =======================
 bot.action(/pay_card_(\d+)/, async (ctx) => {
   const days = ctx.match[1];
 
-  const response = await axios.post("http://localhost:3000/pay", {
+  const response = await axios.post("https://tg-bot-2-eqgt.onrender.com/pay", {
     days,
     userId: ctx.from.id
   });
@@ -180,57 +180,14 @@ bot.action(/pay_stars_(\d+)/, async (ctx) => {
 });
 
 // =======================
-// SUCCESS PAYMENT
+// WEB SERVER
 // =======================
-bot.on("successful_payment", async (ctx) => {
-  try {
-    const payload = ctx.message.successful_payment.invoice_payload;
-    const [_, days, userId] = payload.split("_");
-
-    const expire = Date.now() + days * 24 * 60 * 60 * 1000;
-    activeSubs.set(userId, expire);
-
-    await ctx.telegram.sendMessage(
-      userId,
-      `✅ Оплата прошла! Доступ на ${days} дней активирован`
-    );
-  } catch (e) {
-    console.log(e.message);
-  }
+app.get("/", (req, res) => {
+  res.send("bot is running");
 });
 
 // =======================
-// PLATEGA WEBHOOK (ВОТ ОН)
-// =======================
-app.post("/platega-webhook", async (req, res) => {
-  try {
-    const data = req.body;
-
-    console.log("WEBHOOK:", data);
-
-    const payload = data.payload;
-    const status = data.status;
-
-    if (status !== "paid") {
-      return res.sendStatus(200);
-    }
-
-    const [prefix, userId, days] = payload.split("_");
-
-    await bot.telegram.sendMessage(
-      userId,
-      `✅ Оплата прошла! Доступ на ${days} дней активирован`
-    );
-
-    res.sendStatus(200);
-  } catch (e) {
-    console.log(e);
-    res.sendStatus(500);
-  }
-});
-
-// =======================
-// PAY API (Platega)
+// PAY API
 // =======================
 app.post("/pay", async (req, res) => {
   try {
@@ -262,12 +219,8 @@ app.post("/pay", async (req, res) => {
 });
 
 // =======================
-// SERVER
+// SERVER START
 // =======================
-app.get("/", (req, res) => {
-  res.send("bot is running");
-});
-
 app.listen(3000, () => console.log("server running"));
 
 bot.launch();

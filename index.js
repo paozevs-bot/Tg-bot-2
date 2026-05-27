@@ -296,21 +296,26 @@ app.post("/crypto-webhook", async (req, res) => {
 
     console.log("CRYPTO WEBHOOK:", data);
 
-    const invoice = data.payload; // это объект
+    const invoice = data.payload;
 
     if (invoice.status !== "paid") {
       return res.sendStatus(200);
     }
 
-    const payload = invoice.payload; // вот тут строка crypto_30_371813064
+    const payload = invoice.payload;
     const [prefix, days, userId] = payload.split("_");
 
     const expire = Date.now() + days * 24 * 60 * 60 * 1000;
     activeSubs.set(userId, expire);
 
+    // ВАЖНО: создаём инвайт в канал
+    const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
+      member_limit: 1
+    });
+
     await bot.telegram.sendMessage(
       userId,
-      `✅ Крипта оплачена!\n🎉 Доступ на ${days} дней активирован.`
+      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Войти в канал:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);

@@ -296,7 +296,7 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
 
   await ctx.editMessageCaption(
     `₿ Crypto ${days} дней
-    После оплаты допуск в приват будет выдан автоматически 🍆🍑💦``,
+    После оплаты допуск в приват будет выдан автоматически 🍆🍑💦`,
     {
       reply_markup: {
         inline_keyboard: [

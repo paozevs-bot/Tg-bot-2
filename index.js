@@ -1,12 +1,18 @@
 const express = require("express");
 const axios = require("axios");
 const { Telegraf } = require("telegraf");
+const mongoose = require("mongoose");
+const path = require("path");
 
 const app = express();
-app.use(express.json());
 
-const path = require("path");
+app.use(express.json());
 app.use("/media", express.static(path.join(__dirname, "media")));
+
+// MongoDB подключение
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB connected"))
+  .catch((e) => console.log("Mongo error:", e.message));
 
 // 🔐 ДАННЫЕ
 const MERCHANT_ID = "5844ffa9-a371-4b88-ab20-eb5c055385d2";
@@ -298,4 +304,6 @@ app.post("/platega-webhook", async (req, res) => {
 // =======================
 app.listen(3000, () => console.log("server running"));
 
+console.log("starting bot...");
 bot.launch();
+console.log("bot launched");

@@ -254,6 +254,7 @@ app.post("/pay", async (req, res) => {
   }
 });
 
+
 // =======================
 // PLATEGA WEBHOOK
 // =======================
@@ -266,24 +267,28 @@ app.post("/platega-webhook", async (req, res) => {
     const payload = data.payload;
     const status = data.status;
 
-    // если не оплачено
     if (status !== "paid") {
       return res.sendStatus(200);
     }
 
-    // payload: tg_userid_days
+    // tg_userid_days
     const [prefix, userId, days] = payload.split("_");
 
-    // выдача доступа / сообщение
+    // создаем одноразовую ссылку
+    const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
+      member_limit: 1
+    });
+
+    // отправляем ссылку пользователю
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла! Доступ на ${days} дней активирован`
+      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка на канал:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);
 
   } catch (e) {
-    console.log("WEBHOOK ERROR:", e.message);
+    console.log("WEBHOOK ERROR:", e);
     return res.sendStatus(500);
   }
 });

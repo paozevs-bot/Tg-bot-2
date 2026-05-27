@@ -273,7 +273,8 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
 
     await ctx.editMessageCaption(
       `💳 Оплата СБП на ${days} дней
-      После оплаты допуск в приват будет выдан автоматически 🍆🍑💦`,
+      
+      После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -300,7 +301,9 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
 
   await ctx.editMessageCaption(
     `₿ Crypto ${days} дней
-    После оплаты допуск в приват будет выдан автоматически 🍆🍑💦`,
+   
+    
+    После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -433,7 +436,11 @@ app.post("/platega-webhook", async (req, res) => {
     // 📩 сообщение пользователю
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата успешно прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
+      `✅ Оплата успешно прошла!🎉 
+      
+      Доступ на ${days} дней активирован.
+      
+      👇 Ссылка:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);
@@ -489,7 +496,11 @@ app.post("/crypto-webhook", async (req, res) => {
     // 📩 УВЕДОМЛЕНИЕ ЮЗЕРУ
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата успешно прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Войти в канал:\n${invite.invite_link}`
+      `✅ Оплата успешно прошла!🎉 
+      
+      Доступ на ${days} дней активирован.
+      
+      👇 Войти в канал:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);

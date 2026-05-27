@@ -359,12 +359,13 @@ bot.action(/t_(\d+)/, async (ctx) => {
   const price = tariffs[days];
 
   await ctx.editMessageCaption(
-    `Автовыдача
+    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
     ✨ Выбранный тариф:
    
-    ${days} дней 
+    На ${days} дней 
     
-    💰 ${price.rub}₽`,
+    💰 ${price.rub}₽
+    ⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -419,9 +420,18 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
     if (!url) return ctx.reply("❌ Ошибка: нет ссылки оплаты");
 
     await ctx.editMessageCaption(
-      `💳 Оплата СБП на ${days} дней
-      
-  После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,
+
+
+    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    ❤️ Выбранный тариф:
+     
+     💳 Оплата СБП ✅
+    
+     На ${days} дней ✅
+     ⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    
+  После оплаты доступ в приват будет выдан автоматически 
+  🍆🍑💦`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -447,12 +457,16 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
   const url = await createCryptoLink(days, ctx.from.id);
 
   await ctx.editMessageCaption(
-    `Выбранный тариф:
-    ₿ Crypto
-    ${days} дней
-   
+    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+     ❤️ Выбранный тариф:
+     
+     ₿ Crypto ✅
     
-    После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,
+     На ${days} дней ✅
+     ⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    
+    После оплаты доступ в приват будет выдан автоматически 
+    🍆🍑💦`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -471,7 +485,8 @@ bot.action(/pay_stars_(\d+)/, async (ctx) => {
   const days = ctx.match[1];
 
   await ctx.replyWithInvoice({
-    title: `${days} дней`,
+    title: `${days} дней
+    Автовыдача ❤️`,
     description: `Подписка`,
     payload: `stars_${days}_${ctx.from.id}`,
     currency: "XTR",
@@ -498,7 +513,7 @@ bot.on("successful_payment", async (ctx) => {
 
     await ctx.telegram.approveChatJoinRequest(CHANNEL_ID, Number(userId));
 
-    await ctx.reply("✅ Доступ выдан автоматически");
+    await ctx.reply("🥰 Спасибо за подписку ✅ Доступ выдан автоматически");
 
   } catch (e) {
     console.log(e.message);
@@ -594,6 +609,8 @@ app.post("/platega-webhook", async (req, res) => {
       userId,
       `✅ Оплата успешно прошла!🎉 
       
+      Спасибо за подписку 🥰
+      
       Доступ на ${days} дней активирован.
       
       👇 Ссылка:\n${invite.invite_link}`
@@ -655,7 +672,13 @@ app.post("/crypto-webhook", async (req, res) => {
     // 📩 отправка юзеру
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
+      `✅ Оплата успешно прошла!🎉 
+      
+      Спасибо за подписку 🥰
+      
+      Доступ на ${days} дней активирован.
+      
+      👇 Ссылка:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);

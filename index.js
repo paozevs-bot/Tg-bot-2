@@ -65,7 +65,7 @@ bot.action(/renew_30_(\d+)/, async (ctx) => {
   const url = await createCryptoLink(days, userId);
 
   await ctx.reply(
-    "💳 Оплати продление подписки:",
+    "💳 Оплатите продление подписки 🔮:",
     {
       reply_markup: {
         inline_keyboard: [
@@ -173,7 +173,7 @@ async function revokeExpiredSubs() {
 
       await bot.telegram.sendMessage(
         userId,
-        "⛔️ Подписка закончилась. Доступ к каналу закрыт."
+        "⛔️ Твоя подписка закончилась 😔.\n\nНо ты всегда можешь продлить доступ 💖🥰"
       );
 
       console.log("revoked:", userId);
@@ -193,7 +193,7 @@ bot.start(async (ctx) => {
     {
       caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦
 
-ПОДДЕРЖКА - @ADreksler
+ПОДДЕРЖКА 💪 - @ADreksler
 
 Покупая подписку вы подтверждаете что вам есть 18 лет❗️`,
       reply_markup: {
@@ -234,7 +234,11 @@ bot.action(/t_(\d+)/, async (ctx) => {
 // =======================
 bot.action("back_main", async (ctx) => {
   return ctx.editMessageCaption(
-    `Главное меню`,
+    `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦
+
+ПОДДЕРЖКА 💪 - @ADreksler
+
+Покупая подписку вы подтверждаете что вам есть 18 лет❗️`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -264,7 +268,8 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
     if (!url) return ctx.reply("❌ Ошибка: нет ссылки оплаты");
 
     await ctx.editMessageCaption(
-      `💳 Оплата ${days} дней`,
+      `💳 Оплата СБП на ${days} дней
+      После оплаты допуск в приват будет выдан автоматически 🍆🍑💦`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -277,7 +282,7 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
 
   } catch (e) {
     console.log(e.response?.data || e.message);
-    ctx.reply("❌ Ошибка СБП оплаты");
+    ctx.reply("❌ Ошибка СБП оплаты, обратитесь в поддержку");
   }
 });
 
@@ -290,7 +295,8 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
   const url = await createCryptoLink(days, ctx.from.id);
 
   await ctx.editMessageCaption(
-    `₿ Crypto ${days} дней`,
+    `₿ Crypto ${days} дней
+    После оплаты допуск в приват будет выдан автоматически 🍆🍑💦``,
     {
       reply_markup: {
         inline_keyboard: [
@@ -423,7 +429,7 @@ app.post("/platega-webhook", async (req, res) => {
     // 📩 сообщение пользователю
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
+      `✅ Оплата успешно прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);
@@ -479,7 +485,7 @@ app.post("/crypto-webhook", async (req, res) => {
     // 📩 УВЕДОМЛЕНИЕ ЮЗЕРУ
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Войти в канал:\n${invite.invite_link}`
+      `✅ Оплата успешно прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Войти в канал:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);

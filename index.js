@@ -363,7 +363,7 @@ bot.action(/t_(\d+)/, async (ctx) => {
     {
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🔸 СБП", callback_data: `pay_card_${days}` }],
+          [{ text: "💎 СБП", callback_data: `pay_card_${days}` }],
           [{ text: "₿ Crypto", callback_data: `pay_crypto_${days}` }],
           [{ text: "⭐ Stars", callback_data: `pay_stars_${days}` }],
           [{ text: "⬅️ Назад", callback_data: "back_main" }]

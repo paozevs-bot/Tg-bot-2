@@ -332,9 +332,20 @@ app.post("/platega-webhook", async (req, res) => {
     const payload = data.payload;
     const status = data.status;
 
-    if (status !== "CONFIRMED") return res.sendStatus(200);
+    if (status !== "CONFIRMED") {
+      return res.sendStatus(200);
+    }
 
     const [prefix, userId, days] = payload.split("_");
+
+    const expire = Date.now() + Number(days) * 24 * 60 * 60 * 1000;
+
+    // 💾 СОХРАНЯЕМ В MONGO (ЭТОГО У ТЕБЯ НЕ БЫЛО)
+    await Subscription.findOneAndUpdate(
+      { userId },
+      { userId, expireAt: expire },
+      { upsert: true, new: true }
+    );
 
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
       member_limit: 1
@@ -348,7 +359,7 @@ app.post("/platega-webhook", async (req, res) => {
     return res.sendStatus(200);
 
   } catch (e) {
-    console.log(e);
+    console.log("WEBHOOK ERROR:", e);
     return res.sendStatus(500);
   }
 });

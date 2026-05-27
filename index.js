@@ -267,9 +267,9 @@ app.post("/platega-webhook", async (req, res) => {
     const payload = data.payload;
     const status = data.status;
 
-    if (status !== "paid") {
-      return res.sendStatus(200);
-    }
+  if (status !== "CONFIRMED") {
+  return res.sendStatus(200);
+  }
 
     // tg_userid_days
     const [prefix, userId, days] = payload.split("_");

@@ -30,6 +30,9 @@ const CRYPTOBOT_TOKEN = "573763:AAKaGSoSAWqHF4gSCkpOkGWgkBPlIrAUW4Z";
 
 const CHANNEL_ID = -1002358356232;
 
+const OWNER_ID = 371813064;
+const ADMIN_IDS = [OWNER_ID];
+
 const bot = new Telegraf(BOT_TOKEN);
 
 // 💰 тарифы
@@ -102,18 +105,28 @@ async function revokeExpiredSubs() {
   });
 
   for (const sub of expired) {
+
+    const userId = Number(sub.userId);
+
+    // 🚫 защита админов и владельца
+    if (ADMIN_IDS.includes(userId)) {
+      console.log("SKIP ADMIN:", userId);
+      continue;
+    }
+
     try {
-      await bot.telegram.banChatMember(CHANNEL_ID, Number(sub.userId));
-      await bot.telegram.unbanChatMember(CHANNEL_ID, Number(sub.userId));
+      await bot.telegram.banChatMember(CHANNEL_ID, userId);
+      await bot.telegram.unbanChatMember(CHANNEL_ID, userId);
 
       await bot.telegram.sendMessage(
-        sub.userId,
+        userId,
         "⛔️ Подписка закончилась"
       );
 
-      await Subscription.deleteOne({ userId: sub.userId });
+      await Subscription.deleteOne({ userId });
 
-      console.log("revoked:", sub.userId);
+      console.log("revoked:", userId);
+
     } catch (e) {
       console.log("REVOKE ERROR:", e.message);
     }

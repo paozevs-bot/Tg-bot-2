@@ -401,9 +401,10 @@ app.post("/crypto-webhook", async (req, res) => {
   { upsert: true }
 );
     // ВАЖНО: создаём инвайт в канал
-    const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
-      member_limit: 1
-    });
+   const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
+  member_limit: 1,
+  expire_date: Math.floor(Date.now() / 1000) + days * 24 * 60 * 60
+});
 
     await bot.telegram.sendMessage(
       userId,

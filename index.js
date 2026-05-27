@@ -255,6 +255,40 @@ app.post("/pay", async (req, res) => {
 });
 
 // =======================
+// PLATEGA WEBHOOK
+// =======================
+app.post("/platega-webhook", async (req, res) => {
+  try {
+    const data = req.body;
+
+    console.log("PLATEGA WEBHOOK:", data);
+
+    const payload = data.payload;
+    const status = data.status;
+
+    // если не оплачено
+    if (status !== "paid") {
+      return res.sendStatus(200);
+    }
+
+    // payload: tg_userid_days
+    const [prefix, userId, days] = payload.split("_");
+
+    // выдача доступа / сообщение
+    await bot.telegram.sendMessage(
+      userId,
+      `✅ Оплата прошла! Доступ на ${days} дней активирован`
+    );
+
+    return res.sendStatus(200);
+
+  } catch (e) {
+    console.log("WEBHOOK ERROR:", e.message);
+    return res.sendStatus(500);
+  }
+});
+
+// =======================
 // SERVER
 // =======================
 app.listen(3000, () => console.log("server running"));

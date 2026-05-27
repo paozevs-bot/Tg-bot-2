@@ -14,6 +14,13 @@ mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch((e) => console.log("Mongo error:", e.message));
 
+const SubscriptionSchema = new mongoose.Schema({
+  userId: String,
+  expireAt: Number
+});
+
+const Subscription = mongoose.model("Subscription", SubscriptionSchema);
+
 // 🔐 ДАННЫЕ
 const MERCHANT_ID = "5844ffa9-a371-4b88-ab20-eb5c055385d2";
 const SECRET = "UUyQW5aZLO591x0tm4u4EUbUyCYWH1ZryO6Z1r7R58sf83ZirFBp7VRKbuW8LjXHbombbpjnIAgyzr6DIWTqhonP13Liw3iW7mvB";
@@ -35,6 +42,32 @@ const tariffs = {
 // 🧠 активные подписки
 const activeSubs = new Map();
 
+async function revokeExpiredSubs() {
+  const now = Date.now();
+
+  for (const [userId, expire] of activeSubs.entries()) {
+    if (now > expire) {
+      try {
+        await bot.telegram.banChatMember(CHANNEL_ID, Number(userId));
+
+        // сразу разбаним, чтобы можно было снова зайти по новой ссылке
+        await bot.telegram.unbanChatMember(CHANNEL_ID, Number(userId));
+
+        activeSubs.delete(userId);
+
+        await bot.telegram.sendMessage(
+          userId,
+          "⛔️ Доступ к каналу завершён. Подписка закончилась."
+        );
+
+        console.log(`Access revoked for ${userId}`);
+      } catch (e) {
+        console.log("REVOKE ERROR:", e.message);
+      }
+    }
+  }
+}
+
 // =======================
 // Crypto
 // =======================
@@ -55,6 +88,36 @@ async function createCryptoLink(days, userId) {
   );
 
   return response.data.result.pay_url;
+}
+
+// =======================
+// REVOKE 
+// =======================
+
+async function revokeExpiredSubs() {
+  const now = Date.now();
+
+  const expired = await Subscription.find({
+    expireAt: { $lt: now }
+  });
+
+  for (const sub of expired) {
+    try {
+      await bot.telegram.banChatMember(CHANNEL_ID, Number(sub.userId));
+      await bot.telegram.unbanChatMember(CHANNEL_ID, Number(sub.userId));
+
+      await bot.telegram.sendMessage(
+        sub.userId,
+        "⛔️ Подписка закончилась"
+      );
+
+      await Subscription.deleteOne({ userId: sub.userId });
+
+      console.log("revoked:", sub.userId);
+    } catch (e) {
+      console.log("REVOKE ERROR:", e.message);
+    }
+  }
 }
 
 // =======================
@@ -201,7 +264,11 @@ bot.on("successful_payment", async (ctx) => {
     const [_, days, userId] = payload.split("_");
 
     const expire = Date.now() + days * 24 * 60 * 60 * 1000;
-    activeSubs.set(userId, expire);
+    await Subscription.findOneAndUpdate(
+  { userId },
+  { userId, expireAt: expire },
+  { upsert: true }
+);
 
     await ctx.telegram.approveChatJoinRequest(CHANNEL_ID, Number(userId));
 
@@ -306,8 +373,11 @@ app.post("/crypto-webhook", async (req, res) => {
     const [prefix, days, userId] = payload.split("_");
 
     const expire = Date.now() + days * 24 * 60 * 60 * 1000;
-    activeSubs.set(userId, expire);
-
+    await Subscription.findOneAndUpdate(
+  { userId },
+  { userId, expireAt: expire },
+  { upsert: true }
+);
     // ВАЖНО: создаём инвайт в канал
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
       member_limit: 1
@@ -330,6 +400,10 @@ app.post("/crypto-webhook", async (req, res) => {
 // SERVER + WEBHOOK BOT (ВАЖНО)
 // =======================
 app.listen(3000, () => console.log("server running"));
+
+setInterval(() => {
+  revokeExpiredSubs();
+}, 60 * 1000);
 
 console.log("starting bot...");
 

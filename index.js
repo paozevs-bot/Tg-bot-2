@@ -305,5 +305,19 @@ app.post("/platega-webhook", async (req, res) => {
 app.listen(3000, () => console.log("server running"));
 
 console.log("starting bot...");
-bot.launch();
-console.log("bot launched");
+
+const startBot = async () => {
+  try {
+    await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+
+    bot.launch();
+
+    console.log("bot launched");
+  } catch (e) {
+    console.log("bot error:", e.message);
+  }
+};
+
+if (require.main === module) {
+  startBot();
+}

@@ -35,6 +35,29 @@ const ADMIN_IDS = [OWNER_ID];
 
 const bot = new Telegraf(BOT_TOKEN);
 
+async function extendSubscription(userId, days) {
+  const now = Date.now();
+
+  const sub = await Subscription.findOne({ userId });
+
+  let base = now;
+
+  if (sub && sub.expireAt > now) {
+    base = sub.expireAt;
+  }
+
+  const newExpire = base + days * 24 * 60 * 60 * 1000;
+
+  await Subscription.findOneAndUpdate(
+    { userId },
+    {
+      userId,
+      expireAt: newExpire
+    },
+    { upsert: true }
+  );
+}
+
 bot.action(/renew_30_(\d+)/, async (ctx) => {
   const userId = ctx.match[1];
   const days = 30;
@@ -379,28 +402,34 @@ app.post("/platega-webhook", async (req, res) => {
 
     const [prefix, userId, days] = payload.split("_");
 
+    // 💣 ОБНОВЛЕНИЕ ПОДПИСКИ (ЕДИНАЯ ЛОГИКА)
     const expire = Date.now() + Number(days) * 24 * 60 * 60 * 1000;
 
-    // 💾 СОХРАНЯЕМ В MONGO (ЭТОГО У ТЕБЯ НЕ БЫЛО)
     await Subscription.findOneAndUpdate(
       { userId },
-      { userId, expireAt: expire },
-      { upsert: true, new: true }
+      {
+        userId,
+        expireAt: expire
+      },
+      { upsert: true }
     );
 
+    // 🔐 создаём одноразовую ссылку
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
-      member_limit: 1
+      member_limit: 1,
+      expire_date: Math.floor(Date.now() / 1000) + Number(days) * 24 * 60 * 60
     });
 
+    // 📩 сообщение пользователю
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла !\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
+      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);
 
   } catch (e) {
-    console.log("WEBHOOK ERROR:", e);
+    console.log("PLATEGA WEBHOOK ERROR:", e.message);
     return res.sendStatus(500);
   }
 });
@@ -415,27 +444,39 @@ app.post("/crypto-webhook", async (req, res) => {
 
     console.log("CRYPTO WEBHOOK:", data);
 
-    const invoice = data.payload;
-
-    if (invoice.status !== "paid") {
+    // CryptoBot отправляет payload прямо в data.payload, а не invoice
+    if (!data || data.status !== "paid") {
       return res.sendStatus(200);
     }
 
-    const payload = invoice.payload;
+    const payload = data.payload;
+
+    if (!payload) {
+      console.log("NO PAYLOAD");
+      return res.sendStatus(200);
+    }
+
     const [prefix, days, userId] = payload.split("_");
 
-    const expire = Date.now() + days * 24 * 60 * 60 * 1000;
-    await Subscription.findOneAndUpdate(
-  { userId },
-  { userId, expireAt: expire },
-  { upsert: true }
-);
-    // ВАЖНО: создаём инвайт в канал
-   const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
-  member_limit: 1,
-  expire_date: Math.floor(Date.now() / 1000) + days * 24 * 60 * 60
-});
+    // 💣 ОБНОВЛЕНИЕ ПОДПИСКИ (ВАЖНО)
+    const expire = Date.now() + Number(days) * 24 * 60 * 60 * 1000;
 
+    await Subscription.findOneAndUpdate(
+      { userId },
+      {
+        userId,
+        expireAt: expire
+      },
+      { upsert: true }
+    );
+
+    // 🔐 СОЗДАНИЕ ОДНОРАЗОВОЙ ССЫЛКИ
+    const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
+      member_limit: 1,
+      expire_date: Math.floor(Date.now() / 1000) + Number(days) * 24 * 60 * 60
+    });
+
+    // 📩 УВЕДОМЛЕНИЕ ЮЗЕРУ
     await bot.telegram.sendMessage(
       userId,
       `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Войти в канал:\n${invite.invite_link}`

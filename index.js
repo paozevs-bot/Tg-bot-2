@@ -35,6 +35,24 @@ const ADMIN_IDS = [OWNER_ID];
 
 const bot = new Telegraf(BOT_TOKEN);
 
+bot.action(/renew_30_(\d+)/, async (ctx) => {
+  const userId = ctx.match[1];
+  const days = 30;
+
+  const url = await createCryptoLink(days, userId);
+
+  await ctx.reply(
+    "💳 Оплати продление подписки:",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "Оплатить", url }]
+        ]
+      }
+    }
+  );
+});
+
 // 💰 тарифы
 const tariffs = {
   "30": { rub: 399, usdt: 5, stars: 399 },
@@ -58,10 +76,22 @@ async function revokeExpiredSubs() {
 
         activeSubs.delete(userId);
 
-        await bot.telegram.sendMessage(
-          userId,
-          "⛔️ Доступ к каналу завершён. Подписка закончилась."
-        );
+       await bot.telegram.sendMessage(
+  userId,
+  "⛔️ Твоя подписка закончилась 😔.\n\nНо ты всегда можешь продлить доступ 💖🥰",
+  {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: "🔁 Продлить подписку на 30 дней", callback_data: `renew_30_${userId}` }
+        ],
+        [
+          { text: "💎 Выбрать тариф", callback_data: "tariffs" }
+        ]
+      ]
+    }
+  }
+);
 
         console.log(`Access revoked for ${userId}`);
       } catch (e) {
@@ -364,7 +394,7 @@ app.post("/platega-webhook", async (req, res) => {
 
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
+      `✅ Оплата прошла !\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);

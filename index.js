@@ -287,6 +287,39 @@ app.post("/platega-webhook", async (req, res) => {
 });
 
 // =======================
+// CRYPTO WEBHOOK
+// =======================
+
+app.post("/crypto-webhook", async (req, res) => {
+  try {
+    const data = req.body;
+
+    console.log("CRYPTO WEBHOOK:", data);
+
+    if (data.status !== "paid") {
+      return res.sendStatus(200);
+    }
+
+    const payload = data.payload;
+    const [prefix, days, userId] = payload.split("_");
+
+    const expire = Date.now() + days * 24 * 60 * 60 * 1000;
+    activeSubs.set(userId, expire);
+
+    await bot.telegram.sendMessage(
+      userId,
+      `✅ Крипта оплачена!\n🎉 Доступ на ${days} дней активирован.`
+    );
+
+    return res.sendStatus(200);
+
+  } catch (e) {
+    console.log("CRYPTO WEBHOOK ERROR:", e.message);
+    return res.sendStatus(500);
+  }
+});
+
+// =======================
 // SERVER + WEBHOOK BOT (ВАЖНО)
 // =======================
 app.listen(3000, () => console.log("server running"));

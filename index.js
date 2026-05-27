@@ -521,16 +521,20 @@ app.post("/platega-webhook", async (req, res) => {
 
 app.post("/crypto-webhook", async (req, res) => {
   try {
+
     const data = req.body;
 
     console.log("CRYPTO WEBHOOK:", data);
 
-    // CryptoBot отправляет payload прямо в data.payload, а не invoice
-    if (!data || data.status !== "paid") {
+    // 💣 invoice object
+    const invoice = data.payload;
+
+    if (!invoice || invoice.status !== "paid") {
       return res.sendStatus(200);
     }
 
-    const payload = data.payload;
+    // 💣 payload из invoice
+    const payload = invoice.payload;
 
     if (!payload) {
       console.log("NO PAYLOAD");
@@ -539,24 +543,57 @@ app.post("/crypto-webhook", async (req, res) => {
 
     const [prefix, days, userId] = payload.split("_");
 
-    // 💣 ОБНОВЛЕНИЕ ПОДПИСКИ (ВАЖНО)
-    const expire = Date.now() + Number(days) * 24 * 60 * 60 * 1000;
+    const expire =
+      Date.now() +
+      Number(days) * 24 * 60 * 60 * 1000;
 
+    // 💾 Mongo
     await Subscription.findOneAndUpdate(
-  { userId },
-  {
-    userId,
+      { userId },
+      {
+        userId,
 
-    boughtAt: Date.now(),
+        boughtAt: Date.now(),
 
-    expireAt: expire,
+        expireAt: expire,
 
-    paymentMethod: "crypto",
+        paymentMethod: "crypto",
 
-    tariff: days
-  },
-  { upsert: true }
-);
+        tariff: days
+      },
+      { upsert: true }
+    );
+
+    // 🔐 одноразовая ссылка
+    const invite =
+      await bot.telegram.createChatInviteLink(
+        CHANNEL_ID,
+        {
+          member_limit: 1,
+          expire_date:
+            Math.floor(Date.now() / 1000) +
+            Number(days) * 24 * 60 * 60
+        }
+      );
+
+    // 📩 сообщение
+    await bot.telegram.sendMessage(
+      userId,
+      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
+    );
+
+    return res.sendStatus(200);
+
+  } catch (e) {
+
+    console.log(
+      "CRYPTO WEBHOOK ERROR:",
+      e.message
+    );
+
+    return res.sendStatus(500);
+  }
+});
 
     // 🔐 СОЗДАНИЕ ОДНОРАЗОВОЙ ССЫЛКИ
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {

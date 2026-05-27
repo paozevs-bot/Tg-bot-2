@@ -20,7 +20,14 @@ mongoose.connect(process.env.MONGO_URI)
 
 const SubscriptionSchema = new mongoose.Schema({
   userId: String,
-  expireAt: Number
+
+  boughtAt: Number,
+
+  expireAt: Number,
+
+  paymentMethod: String,
+
+  tariff: String
 });
 
 const Subscription = mongoose.model("Subscription", SubscriptionSchema);
@@ -61,6 +68,56 @@ async function extendSubscription(userId, days) {
     { upsert: true }
   );
 }
+
+bot.command("subs", async (ctx) => {
+
+  // только админы
+  if (!ADMIN_IDS.includes(ctx.from.id)) {
+    return ctx.reply("нет доступа");
+  }
+
+  const subs = await Subscription.find().sort({
+    expireAt: -1
+  });
+
+  if (!subs.length) {
+    return ctx.reply("Подписок нет");
+  }
+
+  let text = "📊 Подписки:\n\n";
+
+  for (const sub of subs) {
+
+    const bought = sub.boughtAt
+      ? new Date(sub.boughtAt).toLocaleString("ru-RU")
+      : "нет данных";
+
+    const expire = sub.expireAt
+      ? new Date(sub.expireAt).toLocaleString("ru-RU")
+      : "нет данных";
+
+    text +=
+      `👤 ID: ${sub.userId}\n` +
+      `💳 Оплата: ${sub.paymentMethod || "unknown"}\n` +
+      `📦 Тариф: ${sub.tariff || "unknown"} дней\n` +
+      `🛒 Куплено: ${bought}\n` +
+      `⏳ До: ${expire}\n\n`;
+  }
+
+  // Telegram режет длинные сообщения
+  if (text.length > 4000) {
+
+    const chunks = text.match(/.{1,4000}/gs);
+
+    for (const chunk of chunks) {
+      await ctx.reply(chunk);
+    }
+
+    return;
+  }
+
+  await ctx.reply(text);
+});
 
 bot.action(/renew_30_(\d+)/, async (ctx) => {
   const userId = ctx.match[1];
@@ -418,14 +475,21 @@ app.post("/platega-webhook", async (req, res) => {
     // 💣 ОБНОВЛЕНИЕ ПОДПИСКИ (ЕДИНАЯ ЛОГИКА)
     const expire = Date.now() + Number(days) * 24 * 60 * 60 * 1000;
 
-    await Subscription.findOneAndUpdate(
-      { userId },
-      {
-        userId,
-        expireAt: expire
-      },
-      { upsert: true }
-    );
+   await Subscription.findOneAndUpdate(
+  { userId },
+  {
+    userId,
+
+    boughtAt: Date.now(),
+
+    expireAt: expire,
+
+    paymentMethod: "card",
+
+    tariff: days
+  },
+  { upsert: true }
+);
 
     // 🔐 создаём одноразовую ссылку
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
@@ -479,13 +543,20 @@ app.post("/crypto-webhook", async (req, res) => {
     const expire = Date.now() + Number(days) * 24 * 60 * 60 * 1000;
 
     await Subscription.findOneAndUpdate(
-      { userId },
-      {
-        userId,
-        expireAt: expire
-      },
-      { upsert: true }
-    );
+  { userId },
+  {
+    userId,
+
+    boughtAt: Date.now(),
+
+    expireAt: expire,
+
+    paymentMethod: "crypto",
+
+    tariff: days
+  },
+  { upsert: true }
+);
 
     // 🔐 СОЗДАНИЕ ОДНОРАЗОВОЙ ССЫЛКИ
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {

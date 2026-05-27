@@ -499,14 +499,25 @@ setInterval(() => {
   revokeExpiredSubs();
 }, 60 * 1000);
 
+// 🔥 АНТИ-СОН (Render ping)
+setInterval(async () => {
+  try {
+    const url = "https://tg-bot-2-eqgt.onrender.com";
+    const res = await axios.get(url);
+    console.log("PING OK:", res.status);
+  } catch (e) {
+    console.log("PING ERROR:", e.message);
+  }
+}, 5 * 60 * 1000);
+
 console.log("starting bot...");
 
 const startBot = async () => {
   try {
     await bot.telegram.deleteWebhook({ drop_pending_updates: true });
 
-const url = "https://tg-bot-2-eqgt.onrender.com";
-await bot.telegram.setWebhook(`${url}/telegram-webhook`);
+    const url = "https://tg-bot-2-eqgt.onrender.com";
+    await bot.telegram.setWebhook(`${url}/telegram-webhook`);
 
     app.use(bot.webhookCallback("/telegram-webhook"));
 

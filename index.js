@@ -19,7 +19,7 @@ const MERCHANT_ID = "5844ffa9-a371-4b88-ab20-eb5c055385d2";
 const SECRET = "UUyQW5aZLO591x0tm4u4EUbUyCYWH1ZryO6Z1r7R58sf83ZirFBp7VRKbuW8LjXHbombbpjnIAgyzr6DIWTqhonP13Liw3iW7mvB";
 
 const BOT_TOKEN = "8131097541:AAEHHKDmedkzxXzaTjT9_xIPGA19B0Y4wOc";
-const CRYPTOBOT_TOKEN = "573763:AAKaGSoSAWqHF4gSCkpOkGWgkBPlIrAUW4Z";
+const CRYPTOBOT_TOKEN = "573763:AAKaGSoSAwqHF4gSCkpOkGWgkBPlIrAUW4Z";
 
 const CHANNEL_ID = -1002358356232;
 
@@ -58,7 +58,7 @@ async function createCryptoLink(days, userId) {
 }
 
 // =======================
-// START
+// START (ТВОЙ ТЕКСТ НЕ ТРОГАЮ)
 // =======================
 bot.start(async (ctx) => {
   await ctx.replyWithPhoto(
@@ -127,19 +127,14 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
   const days = ctx.match[1];
 
   try {
-    const response = await axios.post(
-      "http://127.0.0.1:3000/pay",
-      {
-        days,
-        userId: ctx.from.id
-      }
-    );
+    const response = await axios.post("http://127.0.0.1:3000/pay", {
+      days,
+      userId: ctx.from.id
+    });
 
     const url = response.data?.url;
 
-    if (!url) {
-      return ctx.reply("❌ Ошибка: нет ссылки оплаты");
-    }
+    if (!url) return ctx.reply("❌ Ошибка: нет ссылки оплаты");
 
     await ctx.editMessageCaption(
       `💳 Оплата ${days} дней`,
@@ -198,7 +193,7 @@ bot.action(/pay_stars_(\d+)/, async (ctx) => {
 });
 
 // =======================
-// PAYMENT SUCCESS
+// SUCCESS PAYMENT
 // =======================
 bot.on("successful_payment", async (ctx) => {
   try {
@@ -248,9 +243,7 @@ app.post("/pay", async (req, res) => {
       response.data?.redirect ||
       response.data?.result?.url;
 
-    if (!url) {
-      return res.status(500).json({ error: "no_url" });
-    }
+    if (!url) return res.status(500).json({ error: "no_url" });
 
     res.json({ url });
 
@@ -261,18 +254,18 @@ app.post("/pay", async (req, res) => {
 });
 
 // =======================
-// WEBHOOK PLATEGA
+// WEBHOOK
 // =======================
 app.post("/platega-webhook", async (req, res) => {
   try {
     const data = req.body;
 
+    console.log("PLATEGA WEBHOOK:", data);
+
     const payload = data.payload;
     const status = data.status;
 
-    if (status !== "CONFIRMED") {
-      return res.sendStatus(200);
-    }
+    if (status !== "CONFIRMED") return res.sendStatus(200);
 
     const [prefix, userId, days] = payload.split("_");
 
@@ -282,7 +275,7 @@ app.post("/platega-webhook", async (req, res) => {
 
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n${invite.invite_link}`
+      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка:\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);
@@ -294,7 +287,7 @@ app.post("/platega-webhook", async (req, res) => {
 });
 
 // =======================
-// SERVER + WEBHOOK BOT
+// SERVER + WEBHOOK BOT (ВАЖНО)
 // =======================
 app.listen(3000, () => console.log("server running"));
 
@@ -304,8 +297,8 @@ const startBot = async () => {
   try {
     await bot.telegram.deleteWebhook({ drop_pending_updates: true });
 
-    const BOT_URL = process.env.BOT_URL;
-    await bot.telegram.setWebhook(`${BOT_URL}/telegram-webhook`);
+    const url = process.env.BOT_URL; 
+    await bot.telegram.setWebhook(`${url}/telegram-webhook`);
 
     app.use(bot.webhookCallback("/telegram-webhook"));
 

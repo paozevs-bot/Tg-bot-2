@@ -296,11 +296,13 @@ app.post("/crypto-webhook", async (req, res) => {
 
     console.log("CRYPTO WEBHOOK:", data);
 
-    if (data.status !== "paid") {
+    const invoice = data.payload; // это объект
+
+    if (invoice.status !== "paid") {
       return res.sendStatus(200);
     }
 
-    const payload = data.payload;
+    const payload = invoice.payload; // вот тут строка crypto_30_371813064
     const [prefix, days, userId] = payload.split("_");
 
     const expire = Date.now() + days * 24 * 60 * 60 * 1000;

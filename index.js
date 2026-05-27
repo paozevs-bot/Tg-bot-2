@@ -108,22 +108,20 @@ async function revokeExpiredSubs() {
 
     const userId = Number(sub.userId);
 
-    // 🚫 защита админов и владельца
-    if (ADMIN_IDS.includes(userId)) {
-      console.log("SKIP ADMIN:", userId);
-      continue;
-    }
-
     try {
+      // ❌ удаляем из базы
+      await Subscription.deleteOne({ userId });
+
+      // 🔥 выкидываем из канала
       await bot.telegram.banChatMember(CHANNEL_ID, userId);
+
+      // (опционально) сразу разрешаем зайти снова в будущем
       await bot.telegram.unbanChatMember(CHANNEL_ID, userId);
 
       await bot.telegram.sendMessage(
         userId,
-        "⛔️ Подписка закончилась"
+        "⛔️ Подписка закончилась. Доступ к каналу закрыт."
       );
-
-      await Subscription.deleteOne({ userId });
 
       console.log("revoked:", userId);
 

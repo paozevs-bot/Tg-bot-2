@@ -359,7 +359,12 @@ bot.action(/t_(\d+)/, async (ctx) => {
   const price = tariffs[days];
 
   await ctx.editMessageCaption(
-    `✨ Тариф: ${days} дней 💰 ${price.rub}₽`,
+    `Автовыдача
+    ✨ Выбранный тариф:
+   
+    ${days} дней 
+    
+    💰 ${price.rub}₽`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -416,7 +421,7 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
     await ctx.editMessageCaption(
       `💳 Оплата СБП на ${days} дней
       
-      После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,
+  После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,
       {
         reply_markup: {
           inline_keyboard: [
@@ -442,7 +447,9 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
   const url = await createCryptoLink(days, ctx.from.id);
 
   await ctx.editMessageCaption(
-    `₿ Crypto ${days} дней
+    `Выбранный тариф:
+    ₿ Crypto
+    ${days} дней
    
     
     После оплаты доступ в приват будет выдан автоматически 🍆🍑💦`,

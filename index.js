@@ -524,45 +524,55 @@ app.post("/crypto-webhook", async (req, res) => {
 
     const data = req.body;
 
-    console.log("CRYPTO WEBHOOK:", data);
-
-    // 💣 invoice object
     const invoice = data.payload;
 
     if (!invoice || invoice.status !== "paid") {
       return res.sendStatus(200);
     }
 
-    // 💣 payload из invoice
     const payload = invoice.payload;
-
-    if (!payload) {
-      console.log("NO PAYLOAD");
-      return res.sendStatus(200);
-    }
-
     const [prefix, days, userId] = payload.split("_");
 
     const expire =
-      Date.now() +
-      Number(days) * 24 * 60 * 60 * 1000;
+      Date.now() + Number(days) * 24 * 60 * 60 * 1000;
 
-    // 💾 Mongo
     await Subscription.findOneAndUpdate(
       { userId },
       {
         userId,
-
         boughtAt: Date.now(),
-
         expireAt: expire,
-
         paymentMethod: "crypto",
-
         tariff: days
       },
       { upsert: true }
     );
+
+    // 💣 ВОТ ТУТ МОЖНО await
+    const invite = await bot.telegram.createChatInviteLink(
+      CHANNEL_ID,
+      {
+        member_limit: 1,
+        expire_date: Math.floor(Date.now() / 1000) + Number(days) * 24 * 60 * 60
+      }
+    );
+
+    await bot.telegram.sendMessage(
+      userId,
+      `✅ Оплата прошла!🎉 
+      
+      Доступ на ${days} дней активирован.
+      
+      👇 Ссылка:\n${invite.invite_link}`
+    );
+
+    return res.sendStatus(200);
+
+  } catch (e) {
+    console.log("CRYPTO WEBHOOK ERROR:", e.message);
+    return res.sendStatus(500);
+  }
+});
 
     // 🔐 одноразовая ссылка
     const invite =

@@ -297,8 +297,8 @@ const startBot = async () => {
   try {
     await bot.telegram.deleteWebhook({ drop_pending_updates: true });
 
-    const url = process.env.BOT_URL; 
-    await bot.telegram.setWebhook(`${url}/telegram-webhook`);
+const url = "https://tg-bot-2-eqgt.onrender.com";
+await bot.telegram.setWebhook(`${url}/telegram-webhook`);
 
     app.use(bot.webhookCallback("/telegram-webhook"));
 

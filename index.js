@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGO_URI)
 const MERCHANT_ID = "5844ffa9-a371-4b88-ab20-eb5c055385d2";
 const SECRET = "UUyQW5aZLO591x0tm4u4EUbUyCYWH1ZryO6Z1r7R58sf83ZirFBp7VRKbuW8LjXHbombbpjnIAgyzr6DIWTqhonP13Liw3iW7mvB";
 
-const BOT_TOKEN = "8131097541:AAEHHKDmedkzxXzaJtT9_xIPGA19B0Y4wOc";
+const BOT_TOKEN = "8131097541:AAEHHKDmedkzxXzaTjT9_xIPGA19B0Y4wOc";
 const CRYPTOBOT_TOKEN = "573763:AAKaGSoSAWqHF4gSCkpOkGWgkBPlIrAUW4Z";
 
 const CHANNEL_ID = -1002358356232;
@@ -58,19 +58,17 @@ async function createCryptoLink(days, userId) {
 }
 
 // =======================
-// START (НЕ ТРОГАЮ ТВОЙ ТЕКСТ)
+// START
 // =======================
 bot.start(async (ctx) => {
   await ctx.replyWithPhoto(
     "https://i.ibb.co/tpWJV9tr/Chat-GPT-Image-22-2026-12-57-27.png",
     {
-      caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦                 
-    
-    
-    ПОДДЕРЖКА - @ADreksler                
-    
-    
-    Покупая подписку вы подтверждайте что вам есть 18 лет❗️️`,
+      caption: `Just_relax_18+ - здесь ты найдешь уникальный контент, который поможет тебе расслабиться и насладиться приятными моментами. Подписка на наш канал — это доступ к эксклюзивным материалам, фото и видео 💦
+
+ПОДДЕРЖКА - @ADreksler
+
+Покупая подписку вы подтверждаете что вам есть 18 лет❗️`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "✨ 30 дней", callback_data: "t_30" }],
@@ -123,16 +121,19 @@ bot.action("back_main", async (ctx) => {
 });
 
 // =======================
-// СБП (КАРТА) - ФИКС
+// СБП
 // =======================
 bot.action(/pay_card_(\d+)/, async (ctx) => {
   const days = ctx.match[1];
 
   try {
-    const response = await axios.post("http://127.0.0.1:3000/pay", {
-      days,
-      userId: ctx.from.id
-    });
+    const response = await axios.post(
+      "http://127.0.0.1:3000/pay",
+      {
+        days,
+        userId: ctx.from.id
+      }
+    );
 
     const url = response.data?.url;
 
@@ -197,7 +198,7 @@ bot.action(/pay_stars_(\d+)/, async (ctx) => {
 });
 
 // =======================
-// SUCCESS PAYMENT
+// PAYMENT SUCCESS
 // =======================
 bot.on("successful_payment", async (ctx) => {
   try {
@@ -217,7 +218,7 @@ bot.on("successful_payment", async (ctx) => {
 });
 
 // =======================
-// PAY API (СБП)
+// PAY API
 // =======================
 app.post("/pay", async (req, res) => {
   try {
@@ -248,7 +249,6 @@ app.post("/pay", async (req, res) => {
       response.data?.result?.url;
 
     if (!url) {
-      console.log("PLATEGA RESPONSE:", response.data);
       return res.status(500).json({ error: "no_url" });
     }
 
@@ -260,47 +260,41 @@ app.post("/pay", async (req, res) => {
   }
 });
 
-
 // =======================
-// PLATEGA WEBHOOK
+// WEBHOOK PLATEGA
 // =======================
 app.post("/platega-webhook", async (req, res) => {
   try {
     const data = req.body;
 
-    console.log("PLATEGA WEBHOOK:", data);
-
     const payload = data.payload;
     const status = data.status;
 
-  if (status !== "CONFIRMED") {
-  return res.sendStatus(200);
-  }
+    if (status !== "CONFIRMED") {
+      return res.sendStatus(200);
+    }
 
-    // tg_userid_days
     const [prefix, userId, days] = payload.split("_");
 
-    // создаем одноразовую ссылку
     const invite = await bot.telegram.createChatInviteLink(CHANNEL_ID, {
       member_limit: 1
     });
 
-    // отправляем ссылку пользователю
     await bot.telegram.sendMessage(
       userId,
-      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n👇 Ссылка на канал:\n${invite.invite_link}`
+      `✅ Оплата прошла!\n\n🎉 Доступ на ${days} дней активирован.\n\n${invite.invite_link}`
     );
 
     return res.sendStatus(200);
 
   } catch (e) {
-    console.log("WEBHOOK ERROR:", e);
+    console.log(e);
     return res.sendStatus(500);
   }
 });
 
 // =======================
-// SERVER
+// SERVER + WEBHOOK BOT
 // =======================
 app.listen(3000, () => console.log("server running"));
 
@@ -310,9 +304,12 @@ const startBot = async () => {
   try {
     await bot.telegram.deleteWebhook({ drop_pending_updates: true });
 
-    bot.launch();
+    const BOT_URL = process.env.BOT_URL;
+    await bot.telegram.setWebhook(`${BOT_URL}/telegram-webhook`);
 
-    console.log("bot launched");
+    app.use(bot.webhookCallback("/telegram-webhook"));
+
+    console.log("bot launched (webhook mode)");
   } catch (e) {
     console.log("bot error:", e.message);
   }

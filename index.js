@@ -148,14 +148,14 @@ bot.hears("📊 Проверить подписку", async (ctx) => {
   );
 });
 
-bot.command("my", async (ctx) => {
+bot.command("mysub", async (ctx) => {
 
   const userId = String(ctx.from.id);
 
   const sub = await Subscription.findOne({ userId });
 
   if (!sub) {
-    return ctx.reply("❌ Подписки нет");
+    return ctx.reply("❌ У тебя нет подписки");
   }
 
   const now = Date.now();
@@ -168,8 +168,32 @@ bot.command("my", async (ctx) => {
     (sub.expireAt - now) / (1000 * 60 * 60 * 24)
   );
 
-  ctx.reply(
-    `📊 Твоя подписка:\n\n` +
+  return ctx.reply(
+    `📊 Твоя подписка\n\n` +
+    `📦 Тариф: ${sub.tariff} дней\n` +
+    `⏳ Осталось: ${daysLeft} дней\n` +
+    `📅 До: ${new Date(sub.expireAt).toLocaleString("ru-RU")}`
+  );
+});
+
+bot.hears("📊 Проверить подписку", async (ctx) => {
+
+  const userId = String(ctx.from.id);
+
+  const sub = await Subscription.findOne({ userId });
+
+  if (!sub) return ctx.reply("❌ Подписки нет");
+
+  if (sub.expireAt < Date.now()) {
+    return ctx.reply("⛔️ Подписка закончилась");
+  }
+
+  const daysLeft = Math.ceil(
+    (sub.expireAt - Date.now()) / (1000 * 60 * 60 * 24)
+  );
+
+  return ctx.reply(
+    `📊 Статус подписки\n\n` +
     `📦 Тариф: ${sub.tariff} дней\n` +
     `⏳ Осталось: ${daysLeft} дней\n` +
     `📅 До: ${new Date(sub.expireAt).toLocaleString("ru-RU")}`

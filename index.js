@@ -119,6 +119,73 @@ bot.command("subs", async (ctx) => {
   await ctx.reply(text);
 });
 
+bot.start((ctx) => {
+  return ctx.reply("👋 Меню", {
+    reply_markup: {
+      keyboard: [
+        ["📊 Проверить подписку"]
+      ],
+      resize_keyboard: true
+    }
+  });
+});
+
+bot.hears("📊 Проверить подписку", async (ctx) => {
+
+  const userId = String(ctx.from.id);
+
+  const sub = await Subscription.findOne({ userId });
+
+  if (!sub) {
+    return ctx.reply("❌ Подписки нет");
+  }
+
+  const now = Date.now();
+
+  if (sub.expireAt < now) {
+    return ctx.reply("⛔️ Подписка закончилась");
+  }
+
+  const daysLeft = Math.ceil(
+    (sub.expireAt - now) / (1000 * 60 * 60 * 24)
+  );
+
+  return ctx.reply(
+    `📊 Статус подписки\n\n` +
+    `📦 Тариф: ${sub.tariff} дней\n` +
+    `⏳ Осталось: ${daysLeft} дней\n` +
+    `📅 До: ${new Date(sub.expireAt).toLocaleString("ru-RU")}`
+  );
+});
+
+bot.command("my", async (ctx) => {
+
+  const userId = String(ctx.from.id);
+
+  const sub = await Subscription.findOne({ userId });
+
+  if (!sub) {
+    return ctx.reply("❌ Подписки нет");
+  }
+
+  const now = Date.now();
+
+  if (sub.expireAt < now) {
+    return ctx.reply("⛔️ Подписка закончилась");
+  }
+
+  const daysLeft = Math.ceil(
+    (sub.expireAt - now) / (1000 * 60 * 60 * 24)
+  );
+
+  ctx.reply(
+    `📊 Твоя подписка:\n\n` +
+    `📦 Тариф: ${sub.tariff} дней\n` +
+    `⏳ Осталось: ${daysLeft} дней\n` +
+    `📅 До: ${new Date(sub.expireAt).toLocaleString("ru-RU")}`
+  );
+});
+
 bot.action(/renew_30_(\d+)/, async (ctx) => {
   const userId = ctx.match[1];
   const days = 30;

@@ -119,16 +119,6 @@ bot.command("subs", async (ctx) => {
   await ctx.reply(text);
 });
 
-bot.start((ctx) => {
-  return ctx.reply("👋 Меню", {
-    reply_markup: {
-      keyboard: [
-        ["📊 Проверить подписку"]
-      ],
-      resize_keyboard: true
-    }
-  });
-});
 
 bot.hears("📊 Проверить подписку", async (ctx) => {
 

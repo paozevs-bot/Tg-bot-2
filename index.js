@@ -69,6 +69,49 @@ async function extendSubscription(userId, days) {
   );
 }
 
+bot.command("link", async (ctx) => {
+
+  const userId = String(ctx.from.id);
+
+  const sub = await Subscription.findOne({ userId });
+
+  // ❌ нет подписки
+  if (!sub) {
+    return ctx.reply(
+      "❌ У тебя нет активной подписки"
+    );
+  }
+
+  // ⛔️ подписка истекла
+  if (sub.expireAt < Date.now()) {
+    return ctx.reply(
+      "⛔️ Подписка закончилась"
+    );
+  }
+
+  // ⏳ сколько осталось
+  const secondsLeft = Math.floor(
+    (sub.expireAt - Date.now()) / 1000
+  );
+
+  // 🔐 создаём новую одноразовую ссылку
+  const invite =
+    await bot.telegram.createChatInviteLink(
+      CHANNEL_ID,
+      {
+        member_limit: 1,
+        expire_date:
+          Math.floor(Date.now() / 1000) + secondsLeft
+      }
+    );
+
+  // 📩 отправляем
+  return ctx.reply(
+    `🔑 Твоя ссылка для входа:\n\n${invite.invite_link}`
+  );
+
+});
+
 bot.command("give", async (ctx) => {
 
   // только владелец

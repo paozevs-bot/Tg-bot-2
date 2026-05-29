@@ -69,6 +69,56 @@ async function extendSubscription(userId, days) {
   );
 }
 
+bot.command("give", async (ctx) => {
+
+  // только владелец
+  if (ctx.from.id !== OWNER_ID) {
+    return ctx.reply("❌ Нет доступа");
+  }
+
+  const args = ctx.message.text.split(" ");
+
+  const userId = args[1];
+
+  if (!userId) {
+    return ctx.reply("❌ Укажи userId");
+  }
+
+  const sub = await Subscription.findOne({
+    userId: String(userId)
+  });
+
+  if (!sub) {
+    return ctx.reply("❌ Подписка не найдена");
+  }
+
+  if (sub.expireAt < Date.now()) {
+    return ctx.reply("⛔️ Подписка истекла");
+  }
+
+  // сколько осталось секунд
+  const secondsLeft = Math.floor(
+    (sub.expireAt - Date.now()) / 1000
+  );
+
+  const invite = await bot.telegram.createChatInviteLink(
+    CHANNEL_ID,
+    {
+      member_limit: 1,
+      expire_date:
+        Math.floor(Date.now() / 1000) + secondsLeft
+    }
+  );
+
+  await bot.telegram.sendMessage(
+    userId,
+    `🔑 Твоя новая ссылка:\n\n${invite.invite_link}`
+  );
+
+  return ctx.reply("✅ Ссылка отправлена");
+
+});
+
 bot.command("subs", async (ctx) => {
 
   // только админы

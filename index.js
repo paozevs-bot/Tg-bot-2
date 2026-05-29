@@ -433,7 +433,7 @@ bot.start(async (ctx) => {
 Покупая подписку вы подтверждаете что вам есть 18 лет❗️
 
 /mysub "Моя подписка"
-/link "Моя ссылка в приват"`,
+/link "Мой доступ в Private"`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "✨ 30 дней", callback_data: "t_30" }],
@@ -453,7 +453,7 @@ bot.action(/t_(\d+)/, async (ctx) => {
   const price = tariffs[days];
 
   await ctx.editMessageCaption(
-    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
     ✨ Выбранный вами тариф:
    
     ✅ ${days} ДНЕЙ
@@ -461,7 +461,7 @@ bot.action(/t_(\d+)/, async (ctx) => {
     ✅ ЗА ${price.rub}₽
 
     ✨ Выбери удобный способ оплаты:
-⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘`,
+⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -487,7 +487,7 @@ bot.action("back_main", async (ctx) => {
 Покупая подписку вы подтверждаете что вам есть 18 лет❗️
 
 /mysub "Моя подписка"
-/link "Моя ссылка в приват"`,
+/link "Мой доступ в Private"`,
     {
       reply_markup: {
         inline_keyboard: [
@@ -519,7 +519,7 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
     await ctx.editMessageCaption(
 
 
-    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
     🚀 Выбранный тариф:
      
     💫 ОПЛАТА СБП ✅
@@ -527,7 +527,7 @@ bot.action(/pay_card_(\d+)/, async (ctx) => {
     ⚡ НА ${days} ДНЕЙ ✅
 
     🚀 Ссылка для оплаты 👇
-⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
     
   После оплаты доступ в приват будет выдан АВТОМАТИЧЕСКИ 
   🍆🍑💦`,
@@ -556,7 +556,7 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
   const url = await createCryptoLink(days, ctx.from.id);
 
   await ctx.editMessageCaption(
-    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    `⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
     🚀 Выбранный тариф:
      
      ₿ Crypto ✅
@@ -564,7 +564,7 @@ bot.action(/pay_crypto_(\d+)/, async (ctx) => {
     ⚡ НА ${days} ДНЕЙ ✅
 
     🚀 Ссылка для оплаты 👇
-    ⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
+    ⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘⫘
     
     После оплаты доступ в приват будет выдан АВТОМАТИЧЕСКИ
     🍆🍑💦`,

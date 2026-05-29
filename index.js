@@ -432,7 +432,8 @@ bot.start(async (ctx) => {
 
 Покупая подписку вы подтверждаете что вам есть 18 лет❗️
 
-/mysub "Моя подписка"`,
+/mysub "Моя подписка"
+/link "Моя ссылка в приват"`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "✨ 30 дней", callback_data: "t_30" }],
@@ -485,7 +486,8 @@ bot.action("back_main", async (ctx) => {
 
 Покупая подписку вы подтверждаете что вам есть 18 лет❗️
 
-/mysub "Моя подписка"`,
+/mysub "Моя подписка"
+/link "Моя ссылка в приват"`,
     {
       reply_markup: {
         inline_keyboard: [
